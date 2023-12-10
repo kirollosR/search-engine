@@ -69,26 +69,26 @@ def weighted_tf_table():
     create_table(term_freq, 'Weighted TF')
 
 
-tfd = pd.DataFrame(columns=['freq', 'idf'])
+idf = pd.DataFrame(columns=['freq', 'idf'])
 def idf_table():
 
 
     for i in range(len(term_freq)):
         frequency = term_freq.iloc[i].values.sum()
 
-        tfd.loc[i, 'freq'] = frequency
+        idf.loc[i, 'freq'] = frequency
 
-        tfd.loc[i, 'idf'] = round(math.log10(10 / (float(frequency))), 3)
+        idf.loc[i, 'idf'] = round(math.log10(10 / (float(frequency))), 3)
 
-    tfd.index = term_freq.index
+    idf.index = term_freq.index
 
-    create_table(tfd, 'IDF')
+    create_table(idf, 'IDF')
 
 
 tfIdf = pd.DataFrame()
 def tf_idf_table():
     global tfIdf
-    tfIdf = term_freq.multiply(tfd['idf'], axis=0)
+    tfIdf = term_freq.multiply(idf['idf'], axis=0)
 
     create_table(tfIdf, 'TF.IDF')
 
@@ -105,10 +105,11 @@ def document_length_table():
 
     create_table(document_length, 'Document Length', 'Index')
 
+normalized_term_freq_idf = pd.DataFrame()
 def normalized_tf_idf_table():
     global tfIdf
     global document_length
-    normalized_term_freq_idf = pd.DataFrame()
+    global normalized_term_freq_idf
 
     def get_normalized(col, x):
         try:
