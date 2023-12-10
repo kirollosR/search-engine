@@ -57,19 +57,18 @@ def check_words_in_index(dataframe, word_list):
 
 def insert_query(q):
     query = pd.DataFrame(index=normalized_term_freq_idf.index)
-    query['tf'] = [1 if x in preprocessing(q) else 0 for x in list(normalized_term_freq_idf.index)]
-    query['w_tf'] = query['tf'].apply(lambda x: get_w_tf(x))
-
-    # Use loc to set values in the original DataFrame
-    query.loc[:, 'idf'] = idf['idf'] * query['w_tf']
-    query.loc[:, 'tf_idf'] = query['w_tf'] * query['idf']
-
-    # Use loc to set values in the original DataFrame
-    query['normalized'] = (query['idf'] / np.sqrt((query['idf'] ** 2).sum())).astype(float).round(3)
-
     found_in_index = check_words_in_index(query, preprocessing(q))
-
     if found_in_index:
+        query['tf'] = [1 if x in preprocessing(q) else 0 for x in list(normalized_term_freq_idf.index)]
+        query['w_tf'] = query['tf'].apply(lambda x: get_w_tf(x))
+
+        # Use loc to set values in the original DataFrame
+        query.loc[:, 'idf'] = idf['idf'] * query['w_tf']
+        query.loc[:, 'tf_idf'] = query['w_tf'] * query['idf']
+
+        # Use loc to set values in the original DataFrame
+        query['normalized'] = (query['idf'] / np.sqrt((query['idf'] ** 2).sum())).astype(float).round(3)
+
         create_table(query, 'Query Details')
 
         product_result, scores = product_query(q, query)
@@ -92,3 +91,7 @@ def insert_query(q):
         print('Returned docs')
         for doc_id, score in sorted_scores:
             print(doc_id)
+    else:
+        print("You entered words that's not in the files")
+        query = input('Enter Your Query: ')
+        insert_query(query)
