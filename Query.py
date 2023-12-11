@@ -3,6 +3,7 @@ from Vector_space import normalized_term_freq_idf, idf, create_table
 import math
 import numpy as np
 import pandas as pd
+from prettytable import PrettyTable as pt
 
 
 def positional_index_query(query, positional_index):
@@ -43,7 +44,7 @@ def product_query(q, query):
             pass
         else:
             scores[col] = product2[col].sum()
-    product_result = product2[list(scores.keys())].loc[preprocessing(q)]
+    product_result = product2[list(scores.keys())].loc[preprocessing(q)].round(3)
     return product_result, scores
 
 
@@ -69,28 +70,28 @@ def insert_query(q):
         # Use loc to set values in the original DataFrame
         query['normalized'] = (query['idf'] / np.sqrt((query['idf'] ** 2).sum())).astype(float).round(3)
 
-        create_table(query, 'Query Details')
+        create_table(query.loc[preprocessing(q)], 'Query Details')
 
         product_result, scores = product_query(q, query)
 
         create_table(product_result, 'Product (query*matched doc)')
-        print()
-        print('product sum')
-        print(product_result.sum())
-        print()
-        print('Query Length')
-        q_len = np.sqrt((query['idf'].loc[preprocessing(q)] ** 2).sum())
-        print(q_len)
-        print()
-        print('Cosine Similarity')
-        print(product_result.sum())
-        print()
+
+        summary_table = product_result.sum().reset_index()
+        summary_table.columns = ['Term', 'Sum']
+        create_table(summary_table, 'Product Sum', '')
+
+        ql = pt(['Query Length'])
+        ql.add_row([np.sqrt((query['idf'].loc[preprocessing(q)] ** 2).sum()).round(4)])
+        print(ql)
+
+        create_table(summary_table, 'Cosine Similarity', '')
 
         sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
 
-        print('Returned docs')
+        rd = pt(['Returned Docs'])
         for doc_id, score in sorted_scores:
-            print(doc_id)
+            rd.add_row([doc_id])
+        print(rd)
     else:
         print("You entered words that's not in the files")
         query = input('Enter Your Query: ')
