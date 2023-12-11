@@ -186,7 +186,7 @@ def boolean_query(q):
     noting(phrases)
 
     # Order the dictionary by values
-    sorted_phrases = dict(sorted(phrases[0].items(), key=lambda item: item[1]))
+    sorted_phrases = dict(sorted(phrases[0].items(), key=lambda item: item[1], reverse=True))
 
     table = pt(['Final Returned Docs'])
     for key in sorted_phrases.keys():
