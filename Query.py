@@ -121,3 +121,66 @@ def boolean_query(q):
             phrases[i] = result
 
     return phrases
+
+
+def process_boolean_operations(query_result):
+    operators = ["AND", "OR", "NOT"]
+
+    while any(op in operators for op in query_result):
+        for i in range(len(query_result)):
+            if query_result[i] in operators:
+                operator = query_result[i]
+                if operator == "NOT":
+                    operand = query_result[i + 1]
+                    # Check if the next operator is AND, indicating "AND NOT"
+                    next_operator = query_result[i + 2] if i + 2 < len(query_result) else None
+                    if next_operator == "AND":
+                        and_not_result = perform_and_not_operation(query_result[i - 1], operand)
+                        query_result.pop(i - 1)  # Remove the left operand
+                        query_result.pop(i - 1)  # Remove the "AND"
+                        query_result.pop(i - 1)  # Remove the "NOT"
+                        query_result.pop(i - 1)  # Remove the right operand
+                        query_result.insert(i - 1, and_not_result)
+                    else:
+                        query_result.pop(i)  # Remove NOT operator
+                        query_result.pop(i)  # Remove the operand
+                        result = perform_not_operation(operand)
+                        query_result.insert(i - 1, result)
+                else:
+                    left_operand = query_result[i - 1]
+                    right_operand = query_result[i + 1]
+                    query_result.pop(i - 1)  # Remove the left operand
+                    query_result.pop(i - 1)  # Remove the operator
+                    query_result.pop(i - 1)  # Remove the right operand
+                    if operator == "AND":
+                        result = perform_and_operation(left_operand, right_operand)
+                    elif operator == "OR":
+                        result = perform_or_operation(left_operand, right_operand)
+                    query_result.insert(i - 1, result)
+                break
+
+    return query_result[0]
+
+
+def perform_and_operation(left_operand, right_operand):
+    common_docs = set(left_operand.keys()) & set(right_operand.keys())
+    return list(common_docs)
+
+def perform_or_operation(left_operand, right_operand):
+    # Combine documents from both operands
+    combined_docs = set(left_operand.keys()) | set(right_operand.keys())
+    return list(combined_docs)
+
+
+def perform_not_operation(operand, all_documents=None):
+    # Invert the set of documents from the operand
+    if all_documents is None:
+        all_documents = ["doc1", "doc2", "doc3", "doc4", "doc5", "doc6", "doc7", "doc8", "doc9", "doc10"]
+    not_docs = set(all_documents) - set(operand.keys())
+    return list(not_docs)
+
+def perform_and_not_operation(left_operand, not_operand):
+    # Find common documents with left_operand and remove those from not_operand
+    common_docs = set(left_operand.keys()) & set(not_operand.keys())
+    result = {doc: left_operand[doc] for doc in common_docs}
+    return result
