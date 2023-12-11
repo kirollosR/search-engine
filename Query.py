@@ -57,7 +57,9 @@ def check_words_in_index(dataframe, word_list):
 
 def insert_query(q):
     query = pd.DataFrame(index=normalized_term_freq_idf.index)
-    found_in_index = check_words_in_index(query, preprocessing(q))
+    result = [elem1 for elem1 in preprocessing(q) if elem1 not in operators]
+    print(result)
+    found_in_index = check_words_in_index(query, result)
 
     if found_in_index:
         query['tf'] = [1 if x in preprocessing(q) else 0 for x in list(normalized_term_freq_idf.index)]
@@ -111,6 +113,64 @@ def split_query(q):
     return parts
 
 
+def anding(phrases):
+    try:
+        and_index = phrases.index('AND')
+    except ValueError:
+        and_index = None
+
+    if and_index is not None:
+        common_keys = set(phrases[and_index - 1].keys()).intersection(phrases[and_index + 1].keys())
+
+        # Create a new dictionary with common keys and values
+        common_elements = {}
+        for key in common_keys:
+            common_elements[key] = phrases[and_index - 1][key]
+
+        phrases[and_index - 1: and_index + 2] = [common_elements]
+    return phrases
+
+def oring(phrases):
+    try:
+        or_index = phrases.index('OR')
+    except ValueError:
+        or_index = None
+
+    if or_index is not None:
+        combined_keys = set(phrases[or_index - 1].keys()).union(phrases[or_index + 1].keys())
+
+        # Create a new dictionary with combined keys and values
+        combined_elements = {}
+        for key in combined_keys:
+            combined_elements[key] = phrases[or_index - 1].get(key, None) or phrases[or_index + 1].get(key, None)
+
+        phrases[or_index - 1: or_index + 2] = [combined_elements]
+
+    return phrases
+
+
+
+def noting(phrases):
+    try:
+        not_index = phrases.index('NOT')
+    except ValueError:
+        not_index = None
+
+    if not_index is not None:
+        # Create a new set with the keys from the previous element excluding keys in the current element
+        not_elements = set(phrases[not_index - 1].keys()) - set(phrases[not_index + 1].keys())
+
+        if not not_elements:  # If the set is empty
+            # Remove the 'NOT' index and the index after it
+            del phrases[not_index : not_index + 2]
+        else:
+            # Replace the elements with the new set
+            phrases[not_index - 1 : not_index + 2] = [not_elements]
+
+    return phrases
+
+
+
 def boolean_query(q):
     phrases = split_query(q)
     for i in range(len(phrases)):
@@ -120,4 +180,17 @@ def boolean_query(q):
             result = insert_query(phrase)
             phrases[i] = result
 
-    return phrases
+
+    anding(phrases)
+    oring(phrases)
+    noting(phrases)
+
+    # Order the dictionary by values
+    sorted_phrases = dict(sorted(phrases[0].items(), key=lambda item: item[1]))
+
+    table = pt(['Final Returned Docs'])
+    for key in sorted_phrases.keys():
+        table.add_row([key])
+
+    return table
+
