@@ -71,8 +71,6 @@ def weighted_tf_table():
 
 idf = pd.DataFrame(columns=['freq', 'idf'])
 def idf_table():
-
-
     for i in range(len(term_freq)):
         frequency = term_freq.iloc[i].values.sum()
 

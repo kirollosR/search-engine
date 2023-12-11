@@ -4,7 +4,9 @@ import math
 import numpy as np
 import pandas as pd
 from prettytable import PrettyTable as pt
+import re
 
+operators = ["AND", "OR", "NOT"]
 
 def positional_index_query(query, positional_index):
     list = [[] for i in range(10)]
@@ -29,9 +31,6 @@ def get_w_tf(x):
         return math.log10(x) + 1
     except:
         return 0
-
-
-
 
 
 def product_query(q, query):
@@ -59,6 +58,7 @@ def check_words_in_index(dataframe, word_list):
 def insert_query(q):
     query = pd.DataFrame(index=normalized_term_freq_idf.index)
     found_in_index = check_words_in_index(query, preprocessing(q))
+
     if found_in_index:
         query['tf'] = [1 if x in preprocessing(q) else 0 for x in list(normalized_term_freq_idf.index)]
         query['w_tf'] = query['tf'].apply(lambda x: get_w_tf(x))
@@ -88,11 +88,36 @@ def insert_query(q):
 
         sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
 
+        result_dict = {}
         rd = pt(['Returned Docs'])
         for doc_id, score in sorted_scores:
             rd.add_row([doc_id])
+            result_dict[doc_id] = score
         print(rd)
+
+        return result_dict
     else:
         print("You entered words that's not in the files")
         query = input('Enter Your Query: ')
         insert_query(query)
+
+
+
+def split_query(q):
+
+    parts = re.split(f"({'|'.join(operators)})", q)
+    # Remove empty strings from the list
+    parts = [part for part in parts if part]
+    return parts
+
+
+def boolean_query(q):
+    phrases = split_query(q)
+    for i in range(len(phrases)):
+        phrase = phrases[i]
+        if phrase.upper() not in operators:
+            print(phrase)
+            result = insert_query(phrase)
+            phrases[i] = result
+
+    return phrases

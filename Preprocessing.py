@@ -32,7 +32,6 @@ def load_data():
 
 def print_data(document_of_terms):
     print('Terms after tokenization and stemming')
-    print(document_of_terms)
     for doc in document_of_terms:
         print(doc)
     print('-' * 80 + '\n')
