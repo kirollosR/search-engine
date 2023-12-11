@@ -191,6 +191,6 @@ def boolean_query(q):
     table = pt(['Final Returned Docs'])
     for key in sorted_phrases.keys():
         table.add_row([key])
-
+#
     return table
 
